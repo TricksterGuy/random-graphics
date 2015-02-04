@@ -1,0 +1,1 @@
+puts `java -cp \"script/base_files/jruby-complete.jar\" org.jruby.Main graphics_test.rb`

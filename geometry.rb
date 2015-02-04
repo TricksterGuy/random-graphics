@@ -1,0 +1,6 @@
+require 'point'
+require 'vector'
+require 'polygon'
+require 'line'
+require 'ray'
+require 'segment'

@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>Test</title>
+  <style type="text/css">
+    body {
+      background: #000000;
+      font-family: Arial;
+      font-size: 12px;
+      color: #bbb;
+      text-align: center;
+      line-height: 16px;
+    }
+    a {
+      color: #bbb;
+      margin: 0; padding: 0;
+    }
+    a img {
+      border: 0;
+      margin: 0;
+      padding: 0;
+    }
+    #container {
+      width: 814px;
+      margin: 0 auto;
+      margin-top: 20px;
+    }
+    #the_applet {
+      padding: 6px; 
+      padding-top: 7px; padding-bottom: 2px;
+      background: #262626 url(images/top.png) top left repeat-x;
+      border: 1px solid #363636; border-top: 0;
+    }
+    #built_with {
+      width: 150px;
+      margin: 0 auto;
+      margin-top: 30px;
+      padding: 0;
+    }
+    #description {
+      font-size: 12px;
+      width: 800px;
+      padding: 7px;
+      background: #111;
+      text-align: justify;
+      margin: 0 auto;
+      margin-top: 30px; margin-bottom: 10px;
+      border: 1px solid #363636;
+    }
+      #description h1 {
+        font-size: 18px;
+        font-weight: normal;
+        color: #999;
+        font-variant: small-caps;
+        text-align: center;
+      }
+  </style>
+</head>
+
+<body>
+<div id="container">
+  
+  <div id="the_applet">
+    <object
+      type="application/x-java-applet"
+      code="org.jruby.JRubyApplet"
+      codebase="."
+      archive="graphics_test.rb,ruby-processing.rb,core.jar,jruby-complete.jar,data/Courier-14.vlw,data/mesh.gph"
+      style="margin: 0; padding: 0;"
+      width="800" height="600">
+      
+      <param name="jruby.script" value="graphics_test.rb"/>
+      <param name="image" value="images/ruby.jpg" />
+      <param name="boxbgcolor" value="#000000" />   
+      <param name="lang" value="en" />
+      <param name="progressbar" value="true" />
+      
+      
+      
+      <!-- And if you don't have java.  -->
+      To view this content, you need to install Java from <a href="http://java.com">java.com</a>
+    </object>
+  </div>
+  
+</center>
+<H1>Project done by Brandon Whitehead</H1>
+
+<br>
+Delaunay Triangulations<br>
+-----------------------<br>
+Delaunay Triangulation uses an incremental algorithm for constructing the triangulation.
+<br>
+What the incremental algorithm does add a point one at a time to the triangulation
+and "flip" the triangles that violates the definition of being a delaunay triangle
+<br>
+What my implementation does is at first it adds a big triangle that covers the screen
+This is to ensure that there is always a triangle that contains the point added and it 
+elimates the case where a point is outside the convex hull of the polygon. Then we add
+the points one by one to the triangulation. First we locate the triangle that contains the
+point, and then we split the triangle into three new triangles (the old triangles has points A, B, and C
+when we add point D the three triangles that are formed are from the combinations of A,B,C,D including D 
+ex. ABD ACD BCD) then we find the triangles near the point that violates being a Delaunay triangle with the
+point added. Then after the triangles are found we flip the common edge of each of the triangles to make it Delaunay.
+(ex if we have two triangles ABC and ABD that aren't delaunay when the flip is done then we have have two triangles
+ACD and BCD)
+<br>
+my code for this was inspired by http://www.cs.cornell.edu/Info/People/chew/Delaunay.html
+my twist on their idea is that I ignore the outer triangles (triangles that stretch to outside the bounds of the screen)
+and my calculations do not involve complex matrices and simplexes
+<br>
+There are three cases of things that can happen when you triangulate a polygon
+Case 1: All of the triangles in the triangulation are in the polygon. This means the polygon is convex.
+Case 2: Some of the triangles in the trianglulation aren't in the polygon, but all of the edges of the polygon are in the triangulation. This means some of the vertices in the polygon are concave
+Case 3: Some of the edges aren't in the triangulation. This means that some of the vertices of the polygon formed a sharp turn and/or some of the points in the polygon are close together while a few others are far away.
+<br>
+The third case is something we don't want so if this is the case resample the polygon many times and then perform the triangulation.
+<p>
+
+
+Laplace smoothing<br>
+-----------------<br>
+I did not have a chance to implement this but the way I would have implemented it is for each vertex in the polygon mesh position it in the center of its neighbors (of which the vertex is connected to)
+
+
+
+<p>
+3d bulge<br>
+--------<br>
+I did not have time to do this but the way I would implement this is to use the MAT sample points and calculate the height given
+their radius and then use the z axis point given from that to "bulge" the interior points into 3d. The reason I could not implement this
+is that I would need to rewrite all of my classes (3d mesh, 3d point) to support a z coordinate and extra things I'd have to worry about (camera, rotation).
+<p>
+
+
+Traingle Meshes<br>
+---------------<br>
+The triangle meshes are formed from both using the triangulation and chopping off the triangles that are not in the polygon.
+<br>
+An extra check was made for determining whether a triangle is in the polygon or not. For this I checked if for each segment of the
+triangle for the endpoints are you inside or are a vertex on the polygon then I calculated the midpoint of the segment and asked are you also in or
+on the polygon. If all three of these tests evaulate to true then the triangle is inside the polygon (In the general case this would not work,
+but since the whole triangle will either be all inside the polygon, or have at least one segment outside the polygon this will work)
+<br>
+So for each triangle that passes my above test I add it to a traingle table then we loop through the points in clockwise order (my triangulation may not produce clockwise triangles) I maintain a ruby hash named vertices (Hashmap for java people) mapping points to vertex_ids (This is the reverse mapping of the V table which is then inverted to get the V table) so if the point is not a key to the hash we make it a key and assign a vertex id and incremed the vertex id number for the next point we add to the incidences table the value for the point
+<br>
+While we are calculation the V table we take the point and if it has a opposite (The triangulation knows how to find the opposite point/triangle, given a 
+point and the triangle it belongs to)
+<br>
+waiting is a hash mapping corner_ids to [Point, Triangle]
+    get the opposite point from that vertex in the triangulation
+    get the opposite triangle from that point (this traingle contains the opposite point)
+    if there is no opposite point (its nil) and if the oppositetriangle is valid (the above test for determing if the triangle is inside the polygon)
+      set opposite[corner] = corner
+    else
+      set waiting[corner] = [oppositept, oppositetriangle]
+    end
+
+<br>
+when you have finished the loop on triangles
+iterate through the key_value pairs of waiting
+  corner = key
+  opposite = value[0]
+  triangle = value[1]
+  id = triangles getIndexOf triangle
+  vertex_id = vertices[opposite] (this is the inverse of the V table for reverse lookup)
+  sub = incidences at 3*id, 3*id+1, 3*id + 2
+  opposite[c] = sub getIndexOf vertex_id + 3 * id
+end
+<br>
+When all is said and done I invert (values become keys and keys become values) vertices to get the V table.
+<br>
+The operator methods are from the handout about triangle meshes
+<p>
+Isolation Measure<br>
+-----------------<br>
+I was not able to implement this but the way I would first start at a triangle and ask what other triangle I can get to it from here
+You color in the triangle and color its neighbors. An alternative way to do this is number the triangle 0 and for each iteration you find the 
+neigbors and number them n + 1 when you are done you will have the max isolation. Then when cloring you take the triangles's number
+and do max_isolation - vertex_number and color code it based on that making the higher numbers darker and the lower ones lighter
+<br>
+Instead my color codedness works based on the area of the triangles. and to compute the area of the triangle ABC it would be
+the vector AB crossed with AC divided by 2. this is also 1/2 the triangles normal.
+<p>
+MAT Points<br>
+----------<br>
+Medial Axis Transform points "skeletonalize" the polygon. These points have a radius and the union of all the circles formed by the MAT points
+will compose the polygon. I have MAT functionality (press 'M'), but I could not calculate the radius. The radius calculation would be implemented as
+the distance to the closest edge of the polygon.
+<p>
+Voronoi Diagram<br>
+---------------<br>
+One of the extra things I did was a voronoi diagram. A voronoi diagram is the dual of the delaunay triangulation. The closest points in a voronoi diagram
+corresponds to adjacent cells (shapes) in the diagram.
+It is drawn by
+maintain a visted point list
+for each good triangle in the triangulation
+  for each point in the triangle iterated in clockwise order
+    if it hasn't been visited yet
+    mark it as visited
+    and for each surronding triangle
+    Make a polygon with each circumcircle 
+    draw the polygon
+  end
+end
+<p>
+Mirror mesh<br>
+-----------<br>
+I did not get what was meant by making a mirror of the mesh. I implemented a 2d mirror by adding the points in the same order
+just sending in Point.new(widthOfScreen - point.x, point.y) instead of the original point so that the mesh was mirrored.
+Press x to see this functionality 
+<p>
+Convex hulls<br>
+------------<br>
+Another of the extra things I did was the ability to form a convex hull given a polygon
+<br>
+first you find the minimum (leftmost) point and then you sort the vertices (by x and then by y)
+set the previous point to this point
+until you get back to the start point
+  you loop through all of the vertices
+    and find the first point that isn't the current point
+    then you find the point that makes the cross product of previousPoint.to(current) x previousPoint.to(first) negative
+  when you are done
+  set previous to this point
+  add point to new vertices
+return those vertices
+
+p.s. sorry about my report being messy I will fix and update this later with better formatting
+<center>
+  <div id="built_with">
+    <a href="http://the-shoebox.org/apps/44/">
+      <img src="images/built_with.jpg" alt="Ruby-Processing" />
+    </a>
+      Via <a href="http://jruby.codehaus.org/">JRuby</a> and <a href="http://processing.org/">Processing</a><br />
+      Source: <a href="graphics_test.rb">graphics_test.rb</a>
+  </div>
+  
+  
+  
+</div>
+</body>
+</html>
